@@ -1,11 +1,14 @@
-// --- Imports ---
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   Button,
   FlatList,
   SafeAreaView,
+  ScrollView // Import ScrollView
+  ,
+
+
+
   StyleSheet,
   Text,
   TextInput,
@@ -13,8 +16,6 @@ import {
   View
 } from 'react-native';
 import apiClient from '../api/client';
-
-const CATEGORIES = ['Ապուր', 'Թխուածք', 'Պահածո', 'Աղցան'];
 
 const RecipeListScreen = () => {
   const navigation = useNavigation();
@@ -24,19 +25,25 @@ const RecipeListScreen = () => {
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  
+  const [categories, setCategories] = useState([]);
 
-  const fetchRecipes = async () => {
+  const fetchData = async () => {
     try {
-      const response = await apiClient.get('/recipes');
-      setAllRecipes(response.data);
+      const [recipesResponse, categoriesResponse] = await Promise.all([
+        apiClient.get('/recipes'),
+        apiClient.get('/categories')
+      ]);
+      setAllRecipes(recipesResponse.data);
+      setCategories(categoriesResponse.data);
     } catch (error) {
-      console.error('Error fetching recipes:', error);
+      console.error('Error fetching data:', error);
     }
   };
   
   useEffect(() => {
     if (isFocused) {
-      fetchRecipes();
+      fetchData();
     }
   }, [isFocused]);
 
@@ -63,53 +70,48 @@ const RecipeListScreen = () => {
   
   const clearFilters = () => {
     setSelectedCategory('');
-    setSearchTerm('');
   };
 
-  // =================================================================
-  // --- NEW: Function to Handle Deleting a Recipe ---
-  // =================================================================
-  const handleDelete = (recipeId) => {
-    // Show a confirmation dialog before deleting
-    Alert.alert(
-      "Delete Recipe",
-      "Are you sure you want to permanently delete this recipe?",
-      [
-        // The "Cancel" button
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        // The "Delete" button
-        { 
-          text: "Delete", 
-          onPress: async () => {
-            try {
-              await apiClient.delete(`/recipes/${recipeId}`);
-              // After successful deletion, update the state to remove the recipe from the list
-              setAllRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
-              Alert.alert("Success", "Recipe deleted.");
-            } catch (error) {
-              console.error('Failed to delete recipe:', error);
-              Alert.alert("Error", "Failed to delete the recipe.");
-            }
-          },
-          style: "destructive" 
-        }
-      ]
-    );
+  const handleSelectCategory = (category) => {
+    // If the selected category is tapped again, unselect it
+    if (selectedCategory === category) {
+      setSelectedCategory('');
+    } else {
+      setSelectedCategory(category);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <TextInput style={styles.searchBar} placeholder="Search for a recipe..." value={searchTerm} onChangeText={setSearchTerm} />
-      <View style={styles.categoryContainer}>
-        {CATEGORIES.map(category => (
-          <TouchableOpacity key={category} style={[styles.categoryButton, selectedCategory === category && styles.categoryButtonSelected]} onPress={() => setSelectedCategory(category)}>
-            <Text style={[styles.categoryText, selectedCategory === category && styles.categoryTextSelected]}>{category}</Text>
+      
+      <View>
+        <ScrollView 
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryContainer}
+        >
+          <TouchableOpacity onPress={clearFilters} style={styles.clearButton}>
+            <Text style={styles.clearText}>All</Text>
           </TouchableOpacity>
-        ))}
-        <TouchableOpacity onPress={clearFilters}><Text style={styles.clearText}>Clear</Text></TouchableOpacity>
+          {categories.map(category => (
+            <TouchableOpacity 
+              key={category} 
+              style={[
+                styles.categoryButton, 
+                selectedCategory === category && styles.categoryButtonSelected
+              ]} 
+              onPress={() => handleSelectCategory(category)}
+            >
+              <Text style={[
+                styles.categoryText, 
+                selectedCategory === category && styles.categoryTextSelected
+              ]}>
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
       
       <FlatList
@@ -122,7 +124,6 @@ const RecipeListScreen = () => {
                 <Text style={styles.recipeTitle}>{item.title}</Text>
                 <Text style={styles.recipeCategory}>{item.category}</Text>
               </View>
-              {/* --- NEW: Delete Button --- */}
               <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
                 <Text style={styles.deleteButtonText}>Delete</Text>
               </TouchableOpacity>
@@ -130,52 +131,58 @@ const RecipeListScreen = () => {
           </TouchableOpacity>
         )}
         ListEmptyComponent={<Text style={styles.emptyText}>No recipes found. Try adding one!</Text>}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}
       />
     </SafeAreaView>
   );
 };
 
-// --- Updated Styling ---
+// --- Stylesheet with updates for the horizontal scroll ---
 const styles = StyleSheet.create({
-  // ...other styles are the same
-  container: { flex: 1, paddingHorizontal: 16, backgroundColor: '#f8f8f8' },
-  searchBar: { height: 40, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 10, marginBottom: 16, backgroundColor: '#fff', fontSize: 16 },
-  categoryContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' },
-  categoryButton: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: '#007AFF', margin: 4 },
-  categoryButtonSelected: { backgroundColor: '#007AFF' },
-  categoryText: { color: '#007AFF', fontWeight: '500' },
-  categoryTextSelected: { color: '#fff' },
-  clearText: { color: '#FF3B30', fontWeight: '500', padding: 8 },
-  // Updated recipeItem to support layout
-  recipeItem: { 
-    backgroundColor: '#fff', 
-    padding: 16, 
-    marginBottom: 12, 
-    borderRadius: 8, 
-    borderWidth: 1, 
-    borderColor: '#eee', 
-    flexDirection: 'row',        // Lays out children side-by-side
-    justifyContent: 'space-between', // Pushes children to opposite ends
-    alignItems: 'center'         // Aligns items vertically
+  container: { flex: 1, backgroundColor: '#f8f8f8' },
+  searchBar: { height: 40, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: 16, marginTop: 10, backgroundColor: '#fff', fontSize: 16 },
+  categoryContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  recipeInfo: {
-    flex: 1, // Allows this view to take up available space
+  categoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
+  categoryButtonSelected: {
+    backgroundColor: '#007AFF',
+  },
+  categoryText: {
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  categoryTextSelected: {
+    color: '#fff',
+  },
+  clearButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 10,
+  },
+  clearText: {
+    color: '#FF3B30',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  recipeItem: { backgroundColor: '#fff', padding: 16, marginHorizontal: 16, marginBottom: 12, borderRadius: 8, borderWidth: 1, borderColor: '#eee', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  recipeInfo: { flex: 1 },
   recipeTitle: { fontSize: 18, fontWeight: 'bold' },
   recipeCategory: { fontSize: 14, color: '#666', marginTop: 4 },
   emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#888' },
-  // New styles for the delete button
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
-  },
-  deleteButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  }
+  deleteButton: { backgroundColor: '#FF3B30', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 5 },
+  deleteButtonText: { color: '#fff', fontWeight: 'bold' },
 });
+
 
 export default RecipeListScreen;

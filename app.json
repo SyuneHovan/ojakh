@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "5c3fdb7d-142c-4522-bf68-9749a9cd51be"
+      }
+    },
+    "android": {
+      "package": "com.syune.hovhannisyan.krakaran"
+    }
+  }
+}
