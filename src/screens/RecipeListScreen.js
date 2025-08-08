@@ -2,11 +2,7 @@
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
-  Alert // Import Alert
-  ,
-
-
-
+  Alert,
   Button,
   FlatList,
   SafeAreaView,
@@ -18,7 +14,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 
-const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Dessert'];
+const CATEGORIES = ['Ապուր', 'Թխուածք', 'Պահածո', 'Աղցան'];
 
 const RecipeListScreen = () => {
   const navigation = useNavigation();
