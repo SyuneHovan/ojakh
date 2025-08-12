@@ -5,8 +5,14 @@
         "projectId": "5c3fdb7d-142c-4522-bf68-9749a9cd51be"
       }
     },
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e332c"
+    },
     "android": {
-      "package": "com.syune.hovhannisyan.krakaran"
+      "package": "com.syune.hovhannisyan.ojakh"
     }
   }
 }
