@@ -2,11 +2,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { ActivityIndicator, Button, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import apiClient from '../api/client';
+import { useTheme } from '../context/ThemeContext'; // Import our theme hook
 
 const RecipeViewScreen = ({ route, navigation }) => {
   const { recipeId } = route.params; // Get the ID
   const [recipe, setRecipe] = useState(null); // State to hold the full recipe
   const [loading, setLoading] = useState(true);
+  const { colors } = useTheme(); // Get theme colors
+  const styles = getStyles(colors); // Generate styles with theme colors
 
   // Fetch the full recipe data when the screen loads
   useEffect(() => {
@@ -31,8 +34,9 @@ const RecipeViewScreen = ({ route, navigation }) => {
       navigation.setOptions({
         headerRight: () => (
           <Button 
-            title="Edit" 
+            title="Խմբագրել" 
             onPress={() => navigation.navigate('RecipeForm', { recipeId: recipe.id })}
+            color={colors.primary}
           />
         ),
         title: recipe.title
@@ -81,19 +85,19 @@ const RecipeViewScreen = ({ route, navigation }) => {
         {recipe.category && <View style={styles.tag}><Text style={styles.tagText}>{recipe.category}</Text></View>}
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ingredients</Text>
+        <Text style={styles.sectionTitle}>Բաղադրիչներ</Text>
         {recipe.ingredients.map((ingredient, index) => (
           <TouchableOpacity key={index} style={styles.checklistItem} onPress={() => toggleIngredient(index)}>
-            <MaterialCommunityIcons name={checkedIngredients.includes(index) ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'} size={24} color={checkedIngredients.includes(index) ? '#4CAF50' : '#ccc'} />
+            <MaterialCommunityIcons name={checkedIngredients.includes(index) ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'} size={24} color={checkedIngredients.includes(index) ? colors.primary : '#ccc'} />
             <Text style={[styles.checklistItemText, checkedIngredients.includes(index) && styles.checkedText]}><Text style={styles.ingredientAmount}>{ingredient.amount}</Text> {ingredient.name}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Directions</Text>
+        <Text style={styles.sectionTitle}>Պատրաստման եղանակ</Text>
         {recipe.steps.map((step, index) => (
           <TouchableOpacity key={index} style={styles.stepItem} onPress={() => toggleStep(index)}>
-            <View style={styles.stepNumber}><Text style={styles.stepNumberText}>{index + 1}</Text><MaterialCommunityIcons name={checkedSteps.includes(index) ? 'check-circle' : 'circle-outline'} size={20} color={checkedSteps.includes(index) ? '#4CAF50' : '#ccc'} /></View>
+            <View style={styles.stepNumber}><Text style={styles.stepNumberText}>{index + 1}</Text><MaterialCommunityIcons name={checkedSteps.includes(index) ? 'check-circle' : 'circle-outline'} size={20} color={checkedSteps.includes(index) ? colors.primary : '#ccc'} /></View>
             <View style={styles.stepContent}><Text style={[styles.stepHeader, checkedSteps.includes(index) && styles.checkedText]}>{step.header}</Text><Text style={[styles.stepDescription, checkedSteps.includes(index) && styles.checkedText]}>{step.description}</Text></View>
           </TouchableOpacity>
         ))}
@@ -102,26 +106,76 @@ const RecipeViewScreen = ({ route, navigation }) => {
   );
 };
 
-// --- Stylesheet is the same as before ---
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  image: { width: '100%', height: 250 },
-  detailsContainer: { padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
-  tag: { backgroundColor: '#E0E0E0', borderRadius: 15, paddingVertical: 5, paddingHorizontal: 15, alignSelf: 'flex-start' },
-  tagText: { fontWeight: '500', color: '#333' },
-  section: { paddingHorizontal: 20, paddingBottom: 20, borderTopWidth: 8, borderTopColor: '#f7f7f7' },
-  sectionTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 20, marginBottom: 15 },
-  checklistItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  checklistItemText: { fontSize: 16, marginLeft: 15, flex: 1 },
-  ingredientAmount: { fontWeight: 'bold' },
-  checkedText: { textDecorationLine: 'line-through', color: '#aaa' },
+// --- This is the key change: StyleSheet becomes a function ---
+const getStyles = (colors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background, // Themed
+  },
+  image: {
+    width: '100%',
+    height: 250,
+  },
+  detailsContainer: {
+    padding: 20,
+    backgroundColor: colors.card, // Themed
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: colors.text, // Themed
+  },
+  tag: {
+    backgroundColor: colors.border, // Themed
+    borderRadius: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    alignSelf: 'flex-start',
+  },
+  tagText: {
+    fontWeight: '500',
+    color: colors.text, // Themed
+  },
+  section: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    marginTop: 8,
+    backgroundColor: colors.card, // Themed
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 15,
+    color: colors.text, // Themed
+  },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  checklistItemText: {
+    fontSize: 16,
+    marginLeft: 15,
+    flex: 1,
+    color: colors.text, // Themed
+  },
+  ingredientAmount: {
+    fontWeight: 'bold',
+    color: colors.primary, // Themed
+  },
+  checkedText: {
+    textDecorationLine: 'line-through',
+    color: colors.subtleText, // Themed
+  },
+  // ... (you can continue this pattern for the rest of the styles)
   stepItem: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-start' },
-  stepNumber: { alignItems: 'center', marginRight: 15 },
-  stepNumberText: { fontSize: 18, fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
-  stepContent: { flex: 1 },
-  stepHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 5 },
-  stepDescription: { fontSize: 16, lineHeight: 24, color: '#555' },
+  stepNumber: { alignItems: 'center', marginRight: 15, },
+  stepNumberText: { fontSize: 18, fontWeight: 'bold', color: colors.accent, marginBottom: 5 },
+  stepContent: { flex: 1, },
+  stepHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 5, color: colors.text },
+  stepDescription: { fontSize: 16, lineHeight: 24, color: colors.subtleText },
 });
 
 
