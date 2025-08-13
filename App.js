@@ -1,9 +1,13 @@
+/** @format */
+
 // App.js
-import { MaterialCommunityIcons } from '@expo/vector-icons'; // Import icons
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // Import Tab Navigator
-import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import WavyTabBar from './src/components/WavyTabBar';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import PantryScreen from './src/screens/PantryScreen'; // Import our new screen
 import RecipeFormScreen from './src/screens/RecipeFormScreen';
@@ -15,69 +19,69 @@ const Tab = createBottomTabNavigator(); // Create a Tab object
 
 // This is our original stack of screens for viewing and editing recipes
 const RecipeStack = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Ojakh Recipes" component={RecipeListScreen} />
-      <Stack.Screen name="RecipeView" component={RecipeViewScreen} />
-      <Stack.Screen name="RecipeForm" component={RecipeFormScreen} />
-    </Stack.Navigator>
-  );
+  const { colors } = useTheme();
+  const options = {
+    headerTintColor: colors.white, // Sets title and back button color
+    headerStyle: { backgroundColor: colors.background }, // Correct way to set background color
+    headerShadowVisible: false, // Keeps the flat look
+  }
+	return (
+		<Stack.Navigator>
+			<Stack.Screen
+				name='Recipes'
+				component={RecipeListScreen}
+				options={options}
+			/>
+			<Stack.Screen
+				name='RecipeView'
+				component={RecipeViewScreen}
+        options={options}
+			/>
+			<Stack.Screen
+				name='RecipeForm'
+        component={RecipeFormScreen}
+        options={options}
+			/>
+		</Stack.Navigator>
+	);
 };
 
 // This is the new main navigator with tabs at the bottom
 const MainTabNavigator = () => {
-  const { colors } = useTheme();
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false, // We let the Stack Navigator handle its own header
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.subtleText,
-        tabBarStyle: { backgroundColor: colors.card },
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          if (route.name === 'Recipes') {
-            iconName = focused ? 'notebook' : 'notebook-outline';
-          } else if (route.name === 'My Pantry') {
-            iconName = focused ? 'fridge' : 'fridge-outline';
-          }
-          return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
-        },
-      })}
-    >
-      <Tab.Screen name="Recipes" component={RecipeStack} />
-      <Tab.Screen name="My Pantry" component={PantryScreen} />
-    </Tab.Navigator>
-  );
+	const { colors } = useTheme();
+	return (
+		<Tab.Navigator
+			// This is the key change: we provide our own component
+			tabBar={(props) => <WavyTabBar {...props} />}
+			screenOptions={{
+				headerShown: false,
+			}}>
+			<Tab.Screen
+				name='Recipes'
+				component={RecipeStack}
+			/>
+			<Tab.Screen
+				name='My Pantry'
+				component={PantryScreen}
+			/>
+		</Tab.Navigator>
+	);
 };
 
 // AppContent now renders our main Tab Navigator
 const AppContent = () => {
-  const { scheme, colors } = useTheme();
-  const navigationTheme = {
-    ...(scheme === 'dark' ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(scheme === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
-      primary: colors.primary,
-      background: colors.background,
-      card: colors.card,
-      text: colors.text,
-      border: colors.border,
-    },
-  };
-
-  return (
-    <NavigationContainer theme={navigationTheme}>
-      <MainTabNavigator />
-    </NavigationContainer>
-  );
-}
+	return (
+		<NavigationContainer>
+			<MainTabNavigator />
+		</NavigationContainer>
+	);
+};
 
 // The main App component remains the same
 export default function App() {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
-  );
+	return (
+		<ThemeProvider>
+			<AppContent />
+		</ThemeProvider>
+	);
 }
